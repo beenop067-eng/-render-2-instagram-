@@ -1,0 +1,324 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Instagram Analyzer Bot API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: bot
+    description: Bot control operations
+  - name: analytics
+    description: Instagram analytics
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /bot/status:
+    get:
+      operationId: getBotStatus
+      tags: [bot]
+      summary: Get bot status
+      description: Returns the current status of the Telegram bot
+      responses:
+        "200":
+          description: Bot status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotStatus"
+
+  /bot/start:
+    post:
+      operationId: startBot
+      tags: [bot]
+      summary: Start the bot
+      description: Starts the Telegram bot polling
+      responses:
+        "200":
+          description: Bot started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotActionResult"
+
+  /bot/stop:
+    post:
+      operationId: stopBot
+      tags: [bot]
+      summary: Stop the bot
+      description: Stops the Telegram bot polling
+      responses:
+        "200":
+          description: Bot stopped
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotActionResult"
+
+  /analytics/recent:
+    get:
+      operationId: getRecentAnalyses
+      tags: [analytics]
+      summary: Get recent analyses
+      description: Returns the most recent Instagram profile analyses
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: List of recent analyses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AnalysisRecord"
+
+  /analytics/analyze:
+    post:
+      operationId: analyzeProfile
+      tags: [analytics]
+      summary: Analyze an Instagram profile
+      description: Fetches and analyzes an Instagram profile by username
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyzeRequest"
+      responses:
+        "200":
+          description: Analysis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalysisResult"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Profile not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /analytics/stats:
+    get:
+      operationId: getBotStats
+      tags: [analytics]
+      summary: Get bot statistics
+      description: Returns aggregate statistics about the bot usage
+      responses:
+        "200":
+          description: Bot statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotStats"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    BotStatus:
+      type: object
+      properties:
+        running:
+          type: boolean
+        botName:
+          type: string
+        botUsername:
+          type: string
+        uptime:
+          type: integer
+          description: Uptime in seconds
+        totalAnalyses:
+          type: integer
+      required:
+        - running
+        - totalAnalyses
+
+    BotActionResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        running:
+          type: boolean
+      required:
+        - success
+        - message
+        - running
+
+    AnalyzeRequest:
+      type: object
+      properties:
+        username:
+          type: string
+      required:
+        - username
+
+    AnalysisResult:
+      type: object
+      properties:
+        username:
+          type: string
+        fullName:
+          type: string
+        bio:
+          type: string
+        followers:
+          type: integer
+        following:
+          type: integer
+        postsCount:
+          type: integer
+        isVerified:
+          type: boolean
+        isPrivate:
+          type: boolean
+        isBusinessAccount:
+          type: boolean
+        profilePicUrl:
+          type: string
+        engagementRate:
+          type: number
+        avgLikes:
+          type: number
+        avgComments:
+          type: number
+        accountCategory:
+          type: string
+        externalUrl:
+          type: string
+        analyzedAt:
+          type: string
+      required:
+        - username
+        - followers
+        - following
+        - postsCount
+        - isVerified
+        - isPrivate
+        - isBusinessAccount
+        - engagementRate
+        - analyzedAt
+
+    AnalysisRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        fullName:
+          type: string
+        followers:
+          type: integer
+        following:
+          type: integer
+        postsCount:
+          type: integer
+        isVerified:
+          type: boolean
+        isPrivate:
+          type: boolean
+        isBusinessAccount:
+          type: boolean
+        engagementRate:
+          type: number
+        avgLikes:
+          type: number
+        avgComments:
+          type: number
+        accountCategory:
+          type: string
+        profilePicUrl:
+          type: string
+        requestedBy:
+          type: string
+          description: Telegram username or chat ID that requested this analysis
+        analyzedAt:
+          type: string
+      required:
+        - id
+        - username
+        - followers
+        - following
+        - postsCount
+        - isVerified
+        - isPrivate
+        - isBusinessAccount
+        - engagementRate
+        - analyzedAt
+
+    BotStats:
+      type: object
+      properties:
+        totalAnalyses:
+          type: integer
+        uniqueUsers:
+          type: integer
+        uniqueProfiles:
+          type: integer
+        todayAnalyses:
+          type: integer
+        topProfiles:
+          type: array
+          items:
+            type: object
+            properties:
+              username:
+                type: string
+              count:
+                type: integer
+            required:
+              - username
+              - count
+      required:
+        - totalAnalyses
+        - uniqueUsers
+        - uniqueProfiles
+        - todayAnalyses
+        - topProfiles
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - error
+        - message
